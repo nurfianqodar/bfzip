@@ -6,21 +6,27 @@ from argparse import ArgumentParser
 from colorama import Fore, Style
 import math
 
-banner = Fore.GREEN+'''
+banner = (
+    Fore.GREEN
+    + """
 ·▄▄▄ ▄· ▄▌ ▐ ▄     ·▄▄▄▄•▪   ▄▄▄·     ▄▄· ▄▄▄   ▄▄▄·  ▄▄· ▄ •▄ ▄▄▄ .▄▄▄  
 ▐▄▄·▐█▪██▌•█▌▐█    ▪▀·.█▌██ ▐█ ▄█    ▐█ ▌▪▀▄ █·▐█ ▀█ ▐█ ▌▪█▌▄▌▪▀▄.▀·▀▄ █·
 ██▪ ▐█▌▐█▪▐█▐▐▌    ▄█▀▀▀•▐█· ██▀·    ██ ▄▄▐▀▀▄ ▄█▀▀█ ██ ▄▄▐▀▀▄·▐▀▀▪▄▐▀▀▄ 
 ██▌. ▐█▀·.██▐█▌    █▌▪▄█▀▐█▌▐█▪·•    ▐███▌▐█•█▌▐█ ▪▐▌▐███▌▐█.█▌▐█▄▄▌▐█•█▌
 ▀▀▀   ▀ • ▀▀ █▪    ·▀▀▀ •▀▀▀.▀       ·▀▀▀ .▀  ▀ ▀  ▀ ·▀▀▀ ·▀  ▀ ▀▀▀ .▀  ▀
-'''+Style.RESET_ALL
+"""
+    + Style.RESET_ALL
+)
 
 
 def signal_handler(sig, frame):
     print("Process canceled by user (Ctrl+C). Exiting...")
     sys.exit(0)
 
-# Menetapkan handler untuk SIGINT
+
+# handler untuk SIGINT
 signal.signal(signal.SIGINT, signal_handler)
+
 
 def wordlist_parser(path: str) -> list:
     try:
@@ -35,13 +41,18 @@ def wordlist_parser(path: str) -> list:
         print(f"An error occurred while reading the wordlist: {e}")
         sys.exit(1)
 
+
 def check_zip(path: str) -> bool:
     try:
         with ZipFile(file=path, allowZip64=True) as zf:
             zf.extractall()
     except RuntimeError as err:
-        if 'password required' in str(err).lower():
-            print(Fore.GREEN+"✓ ZIP file is valid and protected, running brute force"+Style.RESET_ALL)
+        if "password required" in str(err).lower():
+            print(
+                Fore.GREEN
+                + "✓ ZIP file is valid and protected, running brute force"
+                + Style.RESET_ALL
+            )
             return True
         else:
             print(f"Runtime error occurred: {err}")
@@ -63,21 +74,25 @@ def check_zip(path: str) -> bool:
     sys.exit(0)
 
 
-def brute_force(passlist: list, zip_path: str):
+def brute_force(passlist: list, zip_path: str) -> bool:
     print("Cracking...")
     with ZipFile(zip_path, allowZip64=True) as zf:
         password_counter = 0
         for pw in passlist:
             try:
                 password_counter += 1
-                password_in_percent = math.floor(password_counter/len(passlist) * 100)
+                password_in_percent = math.floor(password_counter / len(passlist) * 100)
 
-                sys.stdout.write(f"Trying {password_counter} password from {len(passlist)} passwords -> {password_in_percent}% \r")  
+                sys.stdout.write(
+                    f"Trying {password_counter} password from {len(passlist)} passwords -> {password_in_percent}% \r"
+                )
                 sys.stdout.flush()
-                
+
                 zf.setpassword(pwd=pw.encode("utf-8"))
                 if zf.testzip() is None:
-                    print(f"\n\n\n✓ Cracked with password: [  {Fore.GREEN+pw+Fore.RESET}  ]\n\n\n")
+                    print(
+                        f"\n\n\n✓ Cracked with password: [  {Fore.GREEN+pw+Fore.RESET}  ]\n\n\n"
+                    )
                     return True
             except RuntimeError:
                 continue
@@ -86,6 +101,7 @@ def brute_force(passlist: list, zip_path: str):
     print("Failed to crack the ZIP file with provided passwords.")
     return False
 
+
 def main():
     print("\n\n\n")
     print(banner)
@@ -93,12 +109,20 @@ def main():
     print("\n\n\n")
 
     parser = ArgumentParser()
-    parser.add_argument("-i", "--input", type=str, help="Input: path/to/zipfile.zip", required=True)
-    parser.add_argument("-l", "--passlist", type=str, help="Password list: path/to/passwordlist", required=True)
+    parser.add_argument(
+        "-i", "--input", type=str, help="Input: path/to/zipfile.zip", required=True
+    )
+    parser.add_argument(
+        "-l",
+        "--passlist",
+        type=str,
+        help="Password list: path/to/passwordlist",
+        required=True,
+    )
     args = parser.parse_args()
 
     input_zip_path = args.input
-    password_list_path = args.passlist 
+    password_list_path = args.passlist
 
     if check_zip(input_zip_path):
         password_list = wordlist_parser(password_list_path)
@@ -109,6 +133,7 @@ def main():
             sys.exit(1)
     else:
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
